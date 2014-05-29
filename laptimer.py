@@ -3,23 +3,35 @@
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy import integrate as int
-import mpl_toolkits.mplot3d as mp3d  #marked as unused, but projection='3d' not found without it
-from math import pi, sin, cos
+from scipy import integrate as intgr
+import mpl_toolkits.mplot3d as mp3d  # marked as unused, but projection='3d' not found without it
+from math import pi, sin, cos, sqrt
+
+
+def sq(num):
+    """calculate aquare of num"""
+    return num * num
 
 
 def rotvec(base, angles):
     """Take a base vector and rotate it by the angles given for each axis
     in the angles vector. The angles are expected to be in th 1 to -1 range
     with 1 meaning 180deg counter-clockwise and -1 meaning 180deg clockwise"""
+    # print base, angles
     rotangles = pi * angles
-    rotmx = ([1, 0, 0], [0, cos(rotangles[0]), -sin(rotangles[0])], [0, sin(rotangles[0]), cos(rotangles[0])])
-    rotmy = ([cos(rotangles[1]), 0, sin(rotangles[1])], [0, 1, 0], [-sin(rotangles[1]), 0, cos(rotangles[1])])
-    rotmz = ([cos(rotangles[2]), -sin(rotangles[2]), 0], [sin(rotangles[2]), cos(rotangles[2]), 0], [0, 0, 1])
+    rotmx = ([1, 0, 0], [0, sqrt(1 - sq(rotangles[0])), -rotangles[0]], [0, rotangles[0], sqrt(1 - sq(rotangles[0]))])
+    rotmy = ([sqrt(1 - sq(rotangles[1])), 0, rotangles[1]], [0, 1, 0], [-rotangles[1], 0, sqrt(1 - sq(rotangles[1]))])
+    #rotmz = ([sqrt(1 - sq(rotangles[1])), -rotangles[1], 0], [0, 1, 0], [-rotangles[1], 0, sqrt(1 - sq(rotangles[1]))])
+
+    #rotmz = rotangles[2]
+    if sq(rotangles[2]) > 1:
+        print rotangles[2]
+    rotmz = ([sqrt(1 - sq(rotangles[2])), -rotangles[2], 0], [rotangles[2], sqrt(1 - sq(rotangles[2])), 0], [0, 0, 1])
 
     step1 = np.dot(base, rotmx)
     step2 = np.dot(step1, rotmy)
     step3 = np.dot(step2, rotmz)
+    # print step3
     return step3
 
 
@@ -56,17 +68,50 @@ newpos = np.array([0, 0, 0])
 
 accarray = np.array(accData)
 rotarray = np.array(rotData)
-accstatlist  = []
+accstatlist = []
 
 for acc, rot in zip(accarray, rotarray):
     accstatic = rotvec(acc, rot)
     accstatlist.append(accstatic)
 accstatarray = np.array(accstatlist)
 
-velocityx = int.cumtrapz(accstatarray[:, 0], initial=0)
-velocityy = int.cumtrapz(accstatarray[:, 1], initial=0)
-velocityz = int.cumtrapz(accstatarray[:, 2], initial=0)
+velocityx = intgr.cumtrapz(accstatarray[:, 0], initial=0)
+velocityy = intgr.cumtrapz(accstatarray[:, 1], initial=0)
+velocityz = intgr.cumtrapz(accstatarray[:, 2], initial=0)
 
+print zip(accstatarray[:, 0], velocityx)
+fig = plt.figure()
+fig.add_subplot(3,4,1)
+plt.plot(accarray[:, 0])
+fig.add_subplot(3,4,5)
+plt.plot(accarray[:, 1])
+fig.add_subplot(3,4,9)
+plt.plot(accarray[:, 2])
+
+fig.add_subplot(3,4,2)
+plt.plot(rotarray[:, 0])
+fig.add_subplot(3,4,6)
+plt.plot(rotarray[:, 1])
+fig.add_subplot(3,4,10)
+plt.plot(rotarray[:, 2])
+
+fig.add_subplot(3,4,3)
+plt.plot(accstatarray[:, 0])
+fig.add_subplot(3,4,7)
+plt.plot(accstatarray[:, 1])
+fig.add_subplot(3,4,11)
+plt.plot(accstatarray[:, 2])
+
+fig.add_subplot(3,4,4)
+plt.plot(velocityx)
+fig.add_subplot(3,4,8)
+plt.plot(velocityy)
+fig.add_subplot(3,4,12)
+plt.plot(velocityz)
+
+
+# for x,y,z in zip(velocityx, velocityy, velocityz):
+#     print x,y,z
 
 positionx = int.cumtrapz(velocityx, initial=0)
 positiony = int.cumtrapz(velocityy, initial=0)
@@ -74,16 +119,16 @@ positionz = int.cumtrapz(velocityz, initial=0)
 
 
 fig = plt.figure()
-# ax = fig.add_subplot(4,1,1)
+# fig.add_subplot(4,1,1)
 # plt.plot(rotData)
 #
-# ax = fig.add_subplot(4,1,2)
+# fig.add_subplot(4,1,2)
 # plt.plot(gData)
 #
-# ax = fig.add_subplot(4,2,1)
+# fig.add_subplot(4,2,1)
 # plt.plot(accData)
 
-ax = fig.add_subplot(1, 1, 1, projection='3d')
+fig.add_subplot(1, 1, 1, projection='3d')
 ax.scatter(positionx, positiony, positionz)
 
 
