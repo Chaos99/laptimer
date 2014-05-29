@@ -1,0 +1,2 @@
+A small tool to read in a sensor csv log file from the
+Sensoduino Android app and compute positional data from it.
