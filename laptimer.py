@@ -3,6 +3,7 @@
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import integrate as int
 import mpl_toolkits.mplot3d as mp3d  #marked as unused, but projection='3d' not found without it
 from math import pi, sin, cos
 
@@ -48,14 +49,29 @@ def getdatafromlogfile(filename):
 
 rotData, accData = getdatafromlogfile("sensoduino.txt")
 
-posData = [np.array([0, 0, 0])]
+veldata = [np.array([0, 0, 0])]
+posdata = [np.array([0, 0, 0])]
+newvel = np.array([0, 0, 0])
+newpos = np.array([0, 0, 0])
 
-for acc, rot in zip(accData, rotData):
-    oldPos = posData[-1]
-    newPos = np.add(oldPos, rotvec(acc, rot))
-    posData.append(newPos)
+accarray = np.array(accData)
+rotarray = np.array(rotData)
+accstatlist  = []
 
-apos = np.array(posData)
+for acc, rot in zip(accarray, rotarray):
+    accstatic = rotvec(acc, rot)
+    accstatlist.append(accstatic)
+accstatarray = np.array(accstatlist)
+
+velocityx = int.cumtrapz(accstatarray[:, 0], initial=0)
+velocityy = int.cumtrapz(accstatarray[:, 1], initial=0)
+velocityz = int.cumtrapz(accstatarray[:, 2], initial=0)
+
+
+positionx = int.cumtrapz(velocityx, initial=0)
+positiony = int.cumtrapz(velocityy, initial=0)
+positionz = int.cumtrapz(velocityz, initial=0)
+
 
 fig = plt.figure()
 # ax = fig.add_subplot(4,1,1)
@@ -68,7 +84,7 @@ fig = plt.figure()
 # plt.plot(accData)
 
 ax = fig.add_subplot(1, 1, 1, projection='3d')
-ax.scatter(apos[:, 0], apos[:, 1], apos[:, 2])
+ax.scatter(positionx, positiony, positionz)
 
 
 plt.show()
