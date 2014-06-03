@@ -58,88 +58,125 @@ def getdatafromlogfile(filename):
                     accdata_.append(data)
     return rotdata_, accdata_
 
+def getdatafromlogfile2(filename):
+    """Reads in the given log file and returns the contained 3D-vectors from the
+    linear Accelerometer and the Rotation data. Discards values as long as not both devices
+    are active"""
+    gyrdata_ = []
+    accdata_ = []
+    magdata_ = []
+    gpsdata_ = []
 
-rotData, accData = getdatafromlogfile("sensoduino.txt")
+    with open(filename, 'r') as csvfile:
+        rawdata = csv.reader(csvfile, delimiter='\t', quotechar='"')
+        for row in rawdata:
+            if "GYR" in row[1]: 
+                data = np.array([int(row[0])] + [float(y) for y in row[2:5]])
+                gyrdata_.append(data)
 
-veldata = [np.array([0, 0, 0])]
-posdata = [np.array([0, 0, 0])]
-newvel = np.array([0, 0, 0])
-newpos = np.array([0, 0, 0])
+            if "ACC" in row[1]:
+                data = np.array([int(row[0])] + [float(y) for y in row[2:5]])
+                accdata_.append(data)
+                    
+            if "MAG" in row[1]:
+                data = np.array([int(row[0])] + [float(y) for y in row[2:5]])
+                magdata_.append(data)
+                    
+            if "GPS" in row[1]:
+                data = np.array([int(row[0])] + [float(y) for y in row[2:5]])
+                gpsdata_.append(data)
+    return gyrdata_, accdata_, magdata_, gpsdata_
 
+
+gyrData, accData, magData, gpsData = getdatafromlogfile2("sensorLog.txt")
+
+#veldata = [np.array([0, 0, 0])]
+#posdata = [np.array([0, 0, 0])]
+#newvel = np.array([0, 0, 0])
+#newpos = np.array([0, 0, 0])
+#
 accarray = np.array(accData)
-rotarray = np.array(rotData)
-accstatlist = []
-rotdeglist = []
+rotarray = np.array(gyrData)
+magarray = np.array(magData)
+gpsarray = np.array(gpsData)
+#accstatlist = []
+#rotdeglist = []
+#
+#for acc, rot in zip(accarray, rotarray):
+#    accstatic, rotdeg = rotvec(acc, rot)
+#    accstatlist.append(accstatic)
+#    rotdeglist.append(rotdeg)
+#accstatarray = np.array(accstatlist)
+#rotdegarray = np.array(rotdeglist)
+#
+#velocityx = intgr.cumtrapz(accstatarray[:, 0], initial=0)
+#velocityy = intgr.cumtrapz(accstatarray[:, 1], initial=0)
+#velocityz = intgr.cumtrapz(accstatarray[:, 2], initial=0)
 
-for acc, rot in zip(accarray, rotarray):
-    accstatic, rotdeg = rotvec(acc, rot)
-    accstatlist.append(accstatic)
-    rotdeglist.append(rotdeg)
-accstatarray = np.array(accstatlist)
-rotdegarray = np.array(rotdeglist)
+#print zip(accstatarray[:, 0], velocityx)
 
-velocityx = intgr.cumtrapz(accstatarray[:, 0], initial=0)
-velocityy = intgr.cumtrapz(accstatarray[:, 1], initial=0)
-velocityz = intgr.cumtrapz(accstatarray[:, 2], initial=0)
 
-print zip(accstatarray[:, 0], velocityx)
 fig = plt.figure()
-fig.add_subplot(3,5,1)
-plt.plot(accarray[:, 0])
-fig.add_subplot(3,5,6)
-plt.plot(accarray[:, 1])
-fig.add_subplot(3,5,11)
-plt.plot(accarray[:, 2])
+fig.add_subplot(2,2,1)
+plt.title("Acc")
+plt.plot(accarray[:, 0], accarray[:, 1], accarray[:, 0], accarray[:, 2], accarray[:, 0], accarray[:, 3])
+fig.add_subplot(2,2,2)
+plt.title("Gyro")
+plt.plot(rotarray[:, 0], rotarray[:, 1], rotarray[:, 0], rotarray[:, 2], rotarray[:, 0], rotarray[:, 3])
+fig.add_subplot(2,2,3)
+plt.title("Magneto")
+plt.plot(magarray[:, 0], magarray[:, 1], magarray[:, 0], magarray[:, 2], magarray[:, 0], magarray[:, 3])
+plt.show()
 
-fig.add_subplot(3,5,2)
-plt.plot(rotarray[:, 0])
-fig.add_subplot(3,5,7)
-plt.plot(rotarray[:, 1])
-fig.add_subplot(3,5,12)
-plt.plot(rotarray[:, 2])
-
-fig.add_subplot(3,5,3)
-plt.plot(rotdegarray[:, 0])
-fig.add_subplot(3,5,8)
-plt.plot(rotdegarray[:, 1])
-fig.add_subplot(3,5,13)
-plt.plot(rotdegarray[:, 2])
-
-fig.add_subplot(3,5,4)
-plt.plot(accstatarray[:, 0])
-fig.add_subplot(3,5,9)
-plt.plot(accstatarray[:, 1])
-fig.add_subplot(3,5,14)
-plt.plot(accstatarray[:, 2])
-
-fig.add_subplot(3,5,5)
-plt.plot(velocityx)
-fig.add_subplot(3,5,10)
-plt.plot(velocityy)
-fig.add_subplot(3,5,15)
-plt.plot(velocityz)
+#fig.add_subplot(3,5,2)
+#plt.plot(rotarray[:, 0])
+#fig.add_subplot(3,5,7)
+#plt.plot(rotarray[:, 1])
+#fig.add_subplot(3,5,12)
+#plt.plot(rotarray[:, 2])
+#
+#fig.add_subplot(3,5,3)
+#plt.plot(rotdegarray[:, 0])
+#fig.add_subplot(3,5,8)
+#plt.plot(rotdegarray[:, 1])
+#fig.add_subplot(3,5,13)
+#plt.plot(rotdegarray[:, 2])
+#
+#fig.add_subplot(3,5,4)
+#plt.plot(accstatarray[:, 0])
+#fig.add_subplot(3,5,9)
+#plt.plot(accstatarray[:, 1])
+#fig.add_subplot(3,5,14)
+#plt.plot(accstatarray[:, 2])
+#
+#fig.add_subplot(3,5,5)
+#plt.plot(velocityx)
+#fig.add_subplot(3,5,10)
+#plt.plot(velocityy)
+#fig.add_subplot(3,5,15)
+#plt.plot(velocityz)
 
 
 # for x,y,z in zip(velocityx, velocityy, velocityz):
 #     print x,y,z
-
-positionx = intgr.cumtrapz(velocityx, initial=0)
-positiony = intgr.cumtrapz(velocityy, initial=0)
-positionz = intgr.cumtrapz(velocityz, initial=0)
-
-
-fig = plt.figure()
-# fig.add_subplot(4,1,1)
-# plt.plot(rotData)
 #
-# fig.add_subplot(4,1,2)
-# plt.plot(gData)
+#positionx = intgr.cumtrapz(velocityx, initial=0)
+#positiony = intgr.cumtrapz(velocityy, initial=0)
+#positionz = intgr.cumtrapz(velocityz, initial=0)
 #
-# fig.add_subplot(4,2,1)
-# plt.plot(accData)
-
-ax = fig.add_subplot(1, 1, 1, projection='3d')
-ax.scatter(positionx, positiony, positionz)
-
-
-plt.show()
+#
+#fig = plt.figure()
+## fig.add_subplot(4,1,1)
+## plt.plot(rotData)
+##
+## fig.add_subplot(4,1,2)
+## plt.plot(gData)
+##
+## fig.add_subplot(4,2,1)
+## plt.plot(accData)
+#
+#ax = fig.add_subplot(1, 1, 1, projection='3d')
+#ax.scatter(gpsarray[:,1], gpsarray[:,2], gpsarray[:,3])
+#
+#
+#plt.show()
